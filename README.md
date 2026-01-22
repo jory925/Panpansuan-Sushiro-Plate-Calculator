@@ -1,6 +1,3 @@
-# Panpansuan
-盘盘算（Panpansuan） · Sushiro Plate Calculator 是一个用于计算寿司郎（Sushiro）用餐价格的前端小工具。 通过点击不同颜色的盘子按钮，用户可以快速统计盘数并实时计算总金额，同时支持添加自定义价格的单点商品。  本项目为纯前端实现，无需后端，可直接在浏览器中打开使用，适合个人使用、学习展示或课程作业。
-<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
