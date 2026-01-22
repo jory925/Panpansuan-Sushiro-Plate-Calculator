@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- 强制声明仅支持亮色模式，防止某些移动端浏览器强制反色 -->
+    <meta name="color-scheme" content="light">
+    <title>盘盘算 · Sushiro Plate Calculator</title>
+    <style>
+        :root {
+            /* 强制定义固定颜色值，不随系统暗色模式变化 */
+            --s-white: #ffffff;
+            --s-red: #e63946;
+            --s-silver: #adb5bd;
+            --s-yellow: #ffca3a;
+            --s-black: #212529;
+            --bg-color: #f2f2f7;
+            --text-color: #1c1c1e;
+            --card-bg: #ffffff;
+            --accent-red: #d0021b;
+        }
+
+        /* 针对某些移动设备强制保持亮色背景和文字颜色 */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: var(--bg-color) !important;
+                color: var(--text-color) !important;
+            }
+            .container {
+                background-color: var(--card-bg) !important;
+            }
+            /* 确保按钮颜色不被系统滤镜改变 */
+            .plate-btn, .btn-add, .btn-reset, .btn-export {
+                filter: none !important;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 12px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 450px;
+            background: var(--card-bg);
+            padding: 20px 16px;
+            border-radius: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .header-section {
+            text-align: center;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .main-title {
+            font-size: 20px;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .sub-title {
+            font-size: 14px;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .brand-name {
+            color: var(--accent-red);
+            font-weight: 800;
+        }
+
+        .vision-text {
+            color: #8e8e93;
+        }
+
+        /* 盘子选择网格 */
+        .plate-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .plate-item {
+            grid-column: span 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #fafafa;
+            padding: 12px 4px;
+            border-radius: 16px;
+            border: 1px solid #f0f0f0;
+        }
+
+        .plate-item:nth-child(4) { grid-column: 2 / span 2; }
+        .plate-item:nth-child(5) { grid-column: 4 / span 2; }
+
+        .plate-btn {
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            border: 3px solid #eee;
+            cursor: pointer;
+            transition: transform 0.1s;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+            margin-bottom: 8px;
+        }
+
+        .plate-btn:active { transform: scale(0.9); }
+
+        /* 显式使用 !important 确保颜色被锁定 */
+        .white { background-color: var(--s-white) !important; border-color: #ddd !important; }
+        .red { background-color: var(--s-red) !important; border-color: #c4303b !important; }
+        .silver { background-color: var(--s-silver) !important; border-color: #9098a0 !important; }
+        .yellow { background-color: var(--s-yellow) !important; border-color: #e5b634 !important; }
+        .black { background-color: var(--s-black) !important; border-color: #000 !important; }
+
+        .plate-count { 
+            font-size: 24px; 
+            font-weight: 800; 
+            color: var(--text-color);
+            margin: 4px 0;
+        }
+
+        .counter-controls {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            margin-top: 4px;
+        }
+
+        .ctrl-btn-minus {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid #ddd;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #8e8e93;
+            cursor: pointer;
+        }
+
+        .ctrl-btn-minus:active { background: #f2f2f7; }
+
+        .plate-price { font-size: 12px; color: #8e8e93; margin-top: 2px; font-weight: 500; }
+
+        .others-section { 
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 6px;
+        }
+
+        input {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+            background: white;
+            width: 100%;
+            color: var(--text-color);
+        }
+
+        input[type="text"] { flex: 2; }
+        input[type="number"] { flex: 1; }
+
+        .btn-add { 
+            width: 100%;
+            padding: 10px; 
+            background-color: #34c759 !important; 
+            color: white !important; 
+            border: none; 
+            border-radius: 8px; 
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .btn-add:active { opacity: 0.8; }
+
+        .others-list { max-height: 120px; overflow-y: auto; margin-top: 8px; }
+        .other-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 6px 0; 
+            border-bottom: 1px solid #eee;
+            font-size: 13px; 
+        }
+        .remove-btn { color: #ff3b30; padding: 4px 8px; font-weight: bold; cursor: pointer; }
+
+        .summary { 
+            background: #fff5f5; 
+            padding: 16px; 
+            border-radius: 20px; 
+            text-align: center; 
+            border: 1px solid #ffebeb;
+        }
+
+        .total-amount { 
+            font-size: 36px; 
+            font-weight: 900; 
+            color: var(--accent-red); 
+            margin: 4px 0; 
+        }
+
+        .total-label { font-size: 14px; color: #1c1c1e; font-weight: 800; }
+
+        .actions { margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-reset, .btn-export { 
+            padding: 16px; 
+            border: none; 
+            border-radius: 14px; 
+            font-weight: 700; 
+            font-size: 15px; 
+            cursor: pointer;
+        }
+        .btn-reset { background-color: #8e8e93 !important; color: white !important; }
+        .btn-export { background-color: var(--accent-red) !important; color: white !important; }
+
+        .footer-note {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 11px;
+            color: #c7c7cc;
+        }
+
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); align-items: flex-end; }
+        .modal-content { 
+            background-color: white; 
+            padding: 24px 16px 40px; 
+            border-radius: 24px 24px 0 0; 
+            width: 100%; 
+            max-height: 90vh; 
+            overflow-y: auto; 
+            animation: slideUp 0.3s ease-out;
+            color: #000;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        .receipt-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .receipt-table th { text-align: left; border-bottom: 1px solid #eee; padding: 10px 5px; font-size: 12px; color: #8e8e93; }
+        .receipt-table td { padding: 12px 5px; border-bottom: 1px solid #f9f9f9; font-size: 14px; }
+
+        #toast { visibility: hidden; background-color: rgba(0,0,0,0.8); color: #fff; text-align: center; border-radius: 50px; padding: 10px 20px; position: fixed; z-index: 2000; bottom: 100px; left: 50%; transform: translateX(-50%); font-size: 14px; }
+        #toast.show { visibility: visible; animation: fade 2s; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-section">
+        <h1 class="main-title">盘盘算 · Sushiro</h1>
+        <div class="sub-title">
+            <span class="brand-name">スシロ</span><span class="vision-text">-vision</span>
+        </div>
+    </div>
+
+    <!-- 盘子选择区域 -->
+    <div class="plate-grid">
+        <div class="plate-item">
+            <div class="plate-btn white" onclick="adjustPlate('white', 1)"></div>
+            <div class="plate-price">¥8</div>
+            <div class="plate-count" id="count-white">0</div>
+            <div class="counter-controls"><div class="ctrl-btn-minus" onclick="adjustPlate('white', -1)">−</div></div>
+        </div>
+        <div class="plate-item">
+            <div class="plate-btn red" onclick="adjustPlate('red', 1)"></div>
+            <div class="plate-price">¥10</div>
+            <div class="plate-count" id="count-red">0</div>
+            <div class="counter-controls"><div class="ctrl-btn-minus" onclick="adjustPlate('red', -1)">−</div></div>
+        </div>
+        <div class="plate-item">
+            <div class="plate-btn silver" onclick="adjustPlate('silver', 1)"></div>
+            <div class="plate-price">¥15</div>
+            <div class="plate-count" id="count-silver">0</div>
+            <div class="counter-controls"><div class="ctrl-btn-minus" onclick="adjustPlate('silver', -1)">−</div></div>
+        </div>
+        <div class="plate-item">
+            <div class="plate-btn yellow" onclick="adjustPlate('yellow', 1)"></div>
+            <div class="plate-price">¥20</div>
+            <div class="plate-count" id="count-yellow">0</div>
+            <div class="counter-controls"><div class="ctrl-btn-minus" onclick="adjustPlate('yellow', -1)">−</div></div>
+        </div>
+        <div class="plate-item">
+            <div class="plate-btn black" onclick="adjustPlate('black', 1)"></div>
+            <div class="plate-price">¥28</div>
+            <div class="plate-count" id="count-black">0</div>
+            <div class="counter-controls"><div class="ctrl-btn-minus" onclick="adjustPlate('black', -1)">−</div></div>
+        </div>
+    </div>
+
+    <!-- 单点项目区域 -->
+    <div class="others-section">
+        <div class="input-group">
+            <div class="input-row">
+                <input type="text" id="extra-name" placeholder="菜名">
+                <input type="number" id="extra-price" placeholder="¥" inputmode="decimal">
+            </div>
+            <button class="btn-add" onclick="addExtra()">添加单项</button>
+        </div>
+        <div class="others-list" id="others-list"></div>
+    </div>
+
+    <!-- 汇总区域 -->
+    <div class="summary">
+        <div class="total-label">总计</div>
+        <div class="total-amount">¥<span id="total-price">0.00</span></div>
+        <div style="font-size: 13px; color: #666;">共 <span id="total-plates">0</span> 盘</div>
+    </div>
+
+    <div class="actions">
+        <button class="btn-reset" onclick="resetAll()">重置</button>
+        <button class="btn-export" onclick="showReceiptModal()">账单详情</button>
+    </div>
+
+    <div class="footer-note">@jory 个人计数工具</div>
+</div>
+
+<!-- 模态框：点击空白处关闭 -->
+<div id="modal" class="modal" onclick="handleModalClick(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div id="receipt-content"></div>
+        <button class="btn-reset" style="margin-top: 24px; width: 100%; background: #000 !important; color: white !important;" onclick="closeModal()">返回修改</button>
+    </div>
+</div>
+
+<!-- Toast 提示 -->
+<div id="toast">已重置</div>
+
+<script>
+    const PRICES = { white: 8, red: 10, silver: 15, yellow: 20, black: 28 };
+    const NAMES = { white: "白盘", red: "红盘", silver: "银盘", yellow: "黄盘", black: "黑盘" };
+    
+    let counts = { white: 0, red: 0, silver: 0, yellow: 0, black: 0 };
+    let extras = [];
+
+    // 调整盘子数量
+    function adjustPlate(color, delta) {
+        if (counts[color] + delta >= 0) {
+            counts[color] += delta;
+            updateUI();
+            if(delta > 0 && window.navigator.vibrate) window.navigator.vibrate(10);
+        }
+    }
+
+    // 添加单项
+    function addExtra() {
+        const pIn = document.getElementById('extra-price'), nIn = document.getElementById('extra-name');
+        const price = parseFloat(pIn.value);
+        if (isNaN(price) || price <= 0) return showToast('请输入价格');
+        extras.push({ name: nIn.value.trim() || `单点${extras.length+1}`, price });
+        pIn.value = nIn.value = ''; 
+        updateUI();
+    }
+
+    // 移除单项
+    function removeExtra(index) { 
+        extras.splice(index, 1); 
+        updateUI(); 
+    }
+
+    // 重置所有数据
+    function resetAll() {
+        counts = { white: 0, red: 0, silver: 0, yellow: 0, black: 0 }; 
+        extras = []; 
+        updateUI();
+        showToast('已重置');
+    }
+
+    // 显示提示
+    function showToast(msg) {
+        const t = document.getElementById("toast"); 
+        t.innerText = msg; 
+        t.classList.add("show");
+        setTimeout(() => t.classList.remove("show"), 2000);
+    }
+
+    // 更新界面
+    function updateUI() {
+        let total = 0, plates = 0;
+        for (const c in counts) {
+            document.getElementById(`count-${c}`).innerText = counts[c];
+            total += counts[c] * PRICES[c]; 
+            plates += counts[c];
+        }
+        const list = document.getElementById('others-list'); 
+        list.innerHTML = '';
+        extras.forEach((item, i) => {
+            total += item.price;
+            list.innerHTML += `<div class="other-item"><span>${item.name}</span><span>¥${item.price.toFixed(1)} <span class="remove-btn" onclick="removeExtra(${i})">✕</span></span></div>`;
+        });
+        document.getElementById('total-price').innerText = total.toFixed(2);
+        document.getElementById('total-plates').innerText = plates;
+    }
+
+    // 显示账单明细
+    function showReceiptModal() {
+        let total = 0, rows = '';
+        for (const c in counts) if (counts[c] > 0) {
+            const sub = counts[c] * PRICES[c]; 
+            total += sub;
+            rows += `<tr><td>${NAMES[c]}</td><td>¥${PRICES[c]}</td><td>${counts[c]}</td><td style="text-align:right">¥${sub}</td></tr>`;
+        }
+        extras.forEach(item => { 
+            total += item.price; 
+            rows += `<tr><td>${item.name}</td><td>-</td><td>1</td><td style="text-align:right">¥${item.price}</td></tr>`; 
+        });
+        
+        if (total === 0) return showToast('还没吃呢');
+        
+        document.getElementById('receipt-content').innerHTML = `
+            <div style="text-align:center; color: #000;">
+                <h2 style="margin:0;">盘盘算 · スシロ</h2>
+                <p style="color:#8e8e93; font-size:12px; margin:5px 0 20px;">账单详情</p>
+            </div>
+            <table class="receipt-table" style="color: #000;">
+                <thead><tr><th>项目</th><th>单价</th><th>数量</th><th style="text-align:right">合计</th></tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+            <div style="margin-top:30px; text-align:right; border-top:2px solid #000; padding-top:15px; color: #000;">
+                <span style="font-size:16px; font-weight:600;">总计</span>
+                <div style="font-size:32px; font-weight:900; color:#d0021b;">¥${total.toFixed(2)}</div>
+            </div>`;
+        document.getElementById('modal').style.display = 'flex';
+    }
+
+    // 点击模态框背景关闭
+    function handleModalClick(event) {
+        if (event.target === document.getElementById('modal')) {
+            closeModal();
+        }
+    }
+
+    function closeModal() { 
+        document.getElementById('modal').style.display = 'none'; 
+    }
+    
+    // 初始化界面
+    updateUI();
+</script>
+</body>
+</html>
