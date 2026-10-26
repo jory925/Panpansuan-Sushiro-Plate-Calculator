@@ -1,473 +1,106 @@
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- 强制声明仅支持亮色模式，防止某些移动端浏览器强制反色 -->
-    <meta name="color-scheme" content="light">
-    <title>盘盘算 · Sushiro Plate Calculator</title>
-    <style>
-        :root {
-            /* 强制定义固定颜色值，不随系统暗色模式变化 */
-            --s-white: #ffffff;
-            --s-red: #e63946;
-            --s-silver: #adb5bd;
-            --s-yellow: #ffca3a;
-            --s-black: #212529;
-            --bg-color: #f2f2f7;
-            --text-color: #1c1c1e;
-            --card-bg: #ffffff;
-            --accent-red: #d0021b;
-        }
+# 🍣 盘盘算 · Sushiro Calculator
 
-        /* 针对某些移动设备强制保持亮色背景和文字颜色 */
-        @media (prefers-color-scheme: dark) {
-            body {
-                background-color: var(--bg-color) !important;
-                color: var(--text-color) !important;
-            }
-            .container {
-                background-color: var(--card-bg) !important;
-            }
-            /* 确保按钮颜色不被系统滤镜改变 */
-            .plate-btn, .btn-add, .btn-reset, .btn-export {
-                filter: none !important;
-            }
-        }
+<p align="center">
+  <strong>专为寿司郎爱好者打造的高颜值、轻量级移动端消费计数器与账单生成工具</strong>
+</p>
 
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+<p align="center">
+  <img src="https://img.shields.io/badge/Version-v2.5.0-crimson.svg?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License">
+  <img src="https://img.shields.io/badge/Pure_Frontend-HTML5%20%7C%20CSS3%20%7C%20JS-green.svg?style=flat-square" alt="Tech">
+  <img src="https://img.shields.io/badge/Style-Liquid_Glassmorphism-indigo.svg?style=flat-square" alt="Style">
+</p>
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 12px;
-            display: flex;
-            justify-content: center;
-            min-height: 100vh;
-        }
+---
 
-        .container {
-            width: 100%;
-            max-width: 450px;
-            background: var(--card-bg);
-            padding: 20px 16px;
-            border-radius: 24px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        }
+## 📖 项目简介
 
-        .header-section {
-            text-align: center;
-            margin-bottom: 24px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #eee;
-        }
+**盘盘算 (Sushiro Calculator)** 是一款纯前端单文件（Single-file）驱动的日料/寿司盘消费计算工具。告别用餐时心算金额的繁琐，随时记录各色盘子数量与非盘单点菜品，并提供充满趣味的食客画像、高清账单导出与丰富的移动端微交互。
 
-        .main-title {
-            font-size: 20px;
-            margin: 0;
-            font-weight: 700;
-        }
+作者：`@jory` 个人计数工具。
 
-        .sub-title {
-            font-size: 14px;
-            margin-top: 4px;
-            display: block;
-        }
+---
 
-        .brand-name {
-            color: var(--accent-red);
-            font-weight: 800;
-        }
+## ✨ 核心特性
 
-        .vision-text {
-            color: #8e8e93;
-        }
+- 📱 **专为移动端单手握持设计**：采用上 3 下 2 的对称网格排布，大尺寸触控区域，点击盘子即刻计数（`+1`），操作极为流畅。
+- 🎨 **液态玻璃拟态（Liquid Glassmorphism）**：
+  - 高级高斯磨砂玻璃（`backdrop-filter`）、微光内阴影与悬浮景深。
+  - 深度适配系统级深色/浅色模式，支持右上角一键手动自由切换。
+  - 温润珍珠日料风浅色渐变与沉浸式暗黑夜间主题。
+- 📳 **触觉反馈引擎 (Haptic Engine 3.0)**：
+  - **Android 线性马达**：精准控制起振阈值与震动周期（30ms ~ 60ms）。
+  - **微信 JS-SDK / Telegram WebApp**：针对主流移动应用内嵌容器的原生底层震动桥接。
+  - **Web Audio 拟态补偿**：在 iOS Safari 等限制原生震动 API 的环境下，自动激发低频沉闷正弦波（Sub-bass Click），营造逼真的机械按键触感。
+- 🧾 **零依赖高清账单长图导出**：
+  - 纯前端集成 `html2canvas` 引擎，一键将账单渲染为 2.5x 高分辨率 PNG 图片。
+  - 优先调用移动端原生分享面板（Web Share API），可直接点击“存储图像”存至手机相册。
+- 🎭 **趣味动态评价与彩蛋系统**：
+  - **单品专属 Emoji 飘升**：点按各色盘子仅在点击坐标处弹出一颗诱人的对应日料食物 Emoji（玉子烧、三文鱼、甜虾、大腹等）。
+  - **账单瀑布喷泉**：打开账单弹窗瞬间，从屏幕底部喷涌出 36 颗美食与欢庆 Emoji。
+  - **震撼爆裂评价卡片**：结合吃碟配比（黑碟贵族、白碟大师、碳水居酒屋等）弹出毒舌食客画像。
+  - **百元彩蛋（Easter Egg）**：单次消费总额达到 **¥100.00** 时，账单动画完毕后屏幕正中央将爆出超大 🐷 Emoji 与灵魂拷问弹窗。
 
-        /* 盘子选择网格 */
-        .plate-grid {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 12px;
-            margin-bottom: 24px;
-        }
+---
 
-        .plate-item {
-            grid-column: span 2;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background: #fafafa;
-            padding: 12px 4px;
-            border-radius: 16px;
-            border: 1px solid #f0f0f0;
-        }
+## 🏷️ 官方计费规则预设
 
-        .plate-item:nth-child(4) { grid-column: 2 / span 2; }
-        .plate-item:nth-child(5) { grid-column: 4 / span 2; }
+| 碟色标识 | 官方单价 | 对应经典菜式示例 |
+| :---: | :---: | :--- |
+| **白碟** | ¥8.00 | 玉子烧、经典寿司、小军舰 |
+| **红碟** | ¥10.00 | 三文鱼、甜虾、熟章鱼 |
+| **银碟** | ¥15.00 | 帆立贝、刺身寿司、天妇罗虾 |
+| **黄碟** | ¥20.00 | 红楚蟹、优质单品、小食拼盘 |
+| **黑碟** | ¥28.00 | 特选金枪鱼大腹、黑毛和牛、极品厚切 |
 
-        .plate-btn {
-            width: 58px;
-            height: 58px;
-            border-radius: 50%;
-            border: 3px solid #eee;
-            cursor: pointer;
-            transition: transform 0.1s;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.12);
-            margin-bottom: 8px;
-        }
+*注：支持在“单点项目”区域自定义追加非盘装餐品（拉面、茶碗蒸、炸鸡、甜品等）及对应价格。*
 
-        .plate-btn:active { transform: scale(0.9); }
+---
 
-        /* 显式使用 !important 确保颜色被锁定 */
-        .white { background-color: var(--s-white) !important; border-color: #ddd !important; }
-        .red { background-color: var(--s-red) !important; border-color: #c4303b !important; }
-        .silver { background-color: var(--s-silver) !important; border-color: #9098a0 !important; }
-        .yellow { background-color: var(--s-yellow) !important; border-color: #e5b634 !important; }
-        .black { background-color: var(--s-black) !important; border-color: #000 !important; }
+## 🚀 快速上手与运行
 
-        .plate-count { 
-            font-size: 24px; 
-            font-weight: 800; 
-            color: var(--text-color);
-            margin: 4px 0;
-        }
+本项目为**纯单文件架构（Single-file Application）**，无任何前端构建工具要求（No Node.js / Webpack / Vite needed），随时随地双击即可运行。
 
-        .counter-controls {
-            display: flex;
-            justify-content: center;
-            width: 100%;
-            margin-top: 4px;
-        }
+### 1. 本地运行
+直接克隆或下载仓库：
+```bash
+git clone https://github.com/your-username/sushiro-calculator.git
+cd sushiro-calculator
+```
+双击 `sushiro_calculator.html`，即可在任何主流桌面或移动端浏览器中秒开使用。
 
-        .ctrl-btn-minus {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border: 1px solid #ddd;
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: bold;
-            color: #8e8e93;
-            cursor: pointer;
-        }
+### 2. 手机端便捷使用方案
+- **方法一（微信/聊天传输）**：将 `.html` 文件发送到手机微信或文件传输助手，直接打开即可畅享原生震动桥接。
+- **方法二（GitHub Pages 一键部署）**：
+  1. 将本项目推送到 GitHub 仓库。
+  2. 仓库进入 `Settings` -> `Pages`，选择 `main` 分支根目录并点击保存。
+  3. 使用手机浏览器访问生成的 Pages 网址，点击分享按钮并选择**“添加到主屏幕”**，即可作为独立 Web App (PWA) 随用随开。
 
-        .ctrl-btn-minus:active { background: #f2f2f7; }
+---
 
-        .plate-price { font-size: 12px; color: #8e8e93; margin-top: 2px; font-weight: 500; }
+## 🛠️ 技术架构
 
-        .others-section { 
-            background: #f9f9f9;
-            padding: 12px;
-            border-radius: 16px;
-            margin-bottom: 20px;
-        }
+- **核心语言**：HTML5、现代 CSS3 (Custom Properties, Flexbox, Grid, CSS Animations)、原生 ES6+ JavaScript。
+- **第三方外链库**：
+  - [html2canvas (v1.4.1)](https://html2canvas.hertzen.com/)：负责前端 DOM 转 Canvas 高清渲染。
+- **设备 API 集成**：
+  - `navigator.vibrate` (W3C Vibration API)
+  - `window.AudioContext` / `webkitAudioContext` (Web Audio API)
+  - `navigator.share` / `navigator.canShare` (Web Share API)
 
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+---
 
-        .input-row {
-            display: flex;
-            gap: 6px;
-        }
+## 📂 项目结构
 
-        input {
-            padding: 8px 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 13px;
-            outline: none;
-            background: white;
-            width: 100%;
-            color: var(--text-color);
-        }
+```text
+.
+├── sushiro_calculator.html    # 完整核心应用（单文件包含所有样式与交互逻辑）
+├── CHANGELOG.md               # 历史版本演进记录
+└── README.md                  # 项目使用与说明文档
+```
 
-        input[type="text"] { flex: 2; }
-        input[type="number"] { flex: 1; }
+---
 
-        .btn-add { 
-            width: 100%;
-            padding: 10px; 
-            background-color: #34c759 !important; 
-            color: white !important; 
-            border: none; 
-            border-radius: 8px; 
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-        }
+## 📄 开源许可证
 
-        .btn-add:active { opacity: 0.8; }
-
-        .others-list { max-height: 120px; overflow-y: auto; margin-top: 8px; }
-        .other-item { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 6px 0; 
-            border-bottom: 1px solid #eee;
-            font-size: 13px; 
-        }
-        .remove-btn { color: #ff3b30; padding: 4px 8px; font-weight: bold; cursor: pointer; }
-
-        .summary { 
-            background: #fff5f5; 
-            padding: 16px; 
-            border-radius: 20px; 
-            text-align: center; 
-            border: 1px solid #ffebeb;
-        }
-
-        .total-amount { 
-            font-size: 36px; 
-            font-weight: 900; 
-            color: var(--accent-red); 
-            margin: 4px 0; 
-        }
-
-        .total-label { font-size: 14px; color: #1c1c1e; font-weight: 800; }
-
-        .actions { margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn-reset, .btn-export { 
-            padding: 16px; 
-            border: none; 
-            border-radius: 14px; 
-            font-weight: 700; 
-            font-size: 15px; 
-            cursor: pointer;
-        }
-        .btn-reset { background-color: #8e8e93 !important; color: white !important; }
-        .btn-export { background-color: var(--accent-red) !important; color: white !important; }
-
-        .footer-note {
-            margin-top: 20px;
-            text-align: center;
-            font-size: 11px;
-            color: #c7c7cc;
-        }
-
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); align-items: flex-end; }
-        .modal-content { 
-            background-color: white; 
-            padding: 24px 16px 40px; 
-            border-radius: 24px 24px 0 0; 
-            width: 100%; 
-            max-height: 90vh; 
-            overflow-y: auto; 
-            animation: slideUp 0.3s ease-out;
-            color: #000;
-        }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-        .receipt-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .receipt-table th { text-align: left; border-bottom: 1px solid #eee; padding: 10px 5px; font-size: 12px; color: #8e8e93; }
-        .receipt-table td { padding: 12px 5px; border-bottom: 1px solid #f9f9f9; font-size: 14px; }
-
-        #toast { visibility: hidden; background-color: rgba(0,0,0,0.8); color: #fff; text-align: center; border-radius: 50px; padding: 10px 20px; position: fixed; z-index: 2000; bottom: 100px; left: 50%; transform: translateX(-50%); font-size: 14px; }
-        #toast.show { visibility: visible; animation: fade 2s; }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <div class="header-section">
-        <h1 class="main-title">盘盘算 · Sushiro</h1>
-        <div class="sub-title">
-            <span class="brand-name">スシロ</span><span class="vision-text">-vision</span>
-        </div>
-    </div>
-
-    <!-- 盘子选择区域 -->
-    <div class="plate-grid">
-        <div class="plate-item">
-            <div class="plate-btn white" onclick="adjustPlate('white', 1)"></div>
-            <div class="plate-price">¥8</div>
-            <div class="plate-count" id="count-white">0</div>
-            <div class="counter-controls"><div class="ctrl-btn-minus" onclick="adjustPlate('white', -1)">−</div></div>
-        </div>
-        <div class="plate-item">
-            <div class="plate-btn red" onclick="adjustPlate('red', 1)"></div>
-            <div class="plate-price">¥10</div>
-            <div class="plate-count" id="count-red">0</div>
-            <div class="counter-controls"><div class="ctrl-btn-minus" onclick="adjustPlate('red', -1)">−</div></div>
-        </div>
-        <div class="plate-item">
-            <div class="plate-btn silver" onclick="adjustPlate('silver', 1)"></div>
-            <div class="plate-price">¥15</div>
-            <div class="plate-count" id="count-silver">0</div>
-            <div class="counter-controls"><div class="ctrl-btn-minus" onclick="adjustPlate('silver', -1)">−</div></div>
-        </div>
-        <div class="plate-item">
-            <div class="plate-btn yellow" onclick="adjustPlate('yellow', 1)"></div>
-            <div class="plate-price">¥20</div>
-            <div class="plate-count" id="count-yellow">0</div>
-            <div class="counter-controls"><div class="ctrl-btn-minus" onclick="adjustPlate('yellow', -1)">−</div></div>
-        </div>
-        <div class="plate-item">
-            <div class="plate-btn black" onclick="adjustPlate('black', 1)"></div>
-            <div class="plate-price">¥28</div>
-            <div class="plate-count" id="count-black">0</div>
-            <div class="counter-controls"><div class="ctrl-btn-minus" onclick="adjustPlate('black', -1)">−</div></div>
-        </div>
-    </div>
-
-    <!-- 单点项目区域 -->
-    <div class="others-section">
-        <div class="input-group">
-            <div class="input-row">
-                <input type="text" id="extra-name" placeholder="菜名">
-                <input type="number" id="extra-price" placeholder="¥" inputmode="decimal">
-            </div>
-            <button class="btn-add" onclick="addExtra()">添加单项</button>
-        </div>
-        <div class="others-list" id="others-list"></div>
-    </div>
-
-    <!-- 汇总区域 -->
-    <div class="summary">
-        <div class="total-label">总计</div>
-        <div class="total-amount">¥<span id="total-price">0.00</span></div>
-        <div style="font-size: 13px; color: #666;">共 <span id="total-plates">0</span> 盘</div>
-    </div>
-
-    <div class="actions">
-        <button class="btn-reset" onclick="resetAll()">重置</button>
-        <button class="btn-export" onclick="showReceiptModal()">账单详情</button>
-    </div>
-
-    <div class="footer-note">@jory 个人计数工具</div>
-</div>
-
-<!-- 模态框：点击空白处关闭 -->
-<div id="modal" class="modal" onclick="handleModalClick(event)">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <div id="receipt-content"></div>
-        <button class="btn-reset" style="margin-top: 24px; width: 100%; background: #000 !important; color: white !important;" onclick="closeModal()">返回修改</button>
-    </div>
-</div>
-
-<!-- Toast 提示 -->
-<div id="toast">已重置</div>
-
-<script>
-    const PRICES = { white: 8, red: 10, silver: 15, yellow: 20, black: 28 };
-    const NAMES = { white: "白盘", red: "红盘", silver: "银盘", yellow: "黄盘", black: "黑盘" };
-    
-    let counts = { white: 0, red: 0, silver: 0, yellow: 0, black: 0 };
-    let extras = [];
-
-    // 调整盘子数量
-    function adjustPlate(color, delta) {
-        if (counts[color] + delta >= 0) {
-            counts[color] += delta;
-            updateUI();
-            if(delta > 0 && window.navigator.vibrate) window.navigator.vibrate(10);
-        }
-    }
-
-    // 添加单项
-    function addExtra() {
-        const pIn = document.getElementById('extra-price'), nIn = document.getElementById('extra-name');
-        const price = parseFloat(pIn.value);
-        if (isNaN(price) || price <= 0) return showToast('请输入价格');
-        extras.push({ name: nIn.value.trim() || `单点${extras.length+1}`, price });
-        pIn.value = nIn.value = ''; 
-        updateUI();
-    }
-
-    // 移除单项
-    function removeExtra(index) { 
-        extras.splice(index, 1); 
-        updateUI(); 
-    }
-
-    // 重置所有数据
-    function resetAll() {
-        counts = { white: 0, red: 0, silver: 0, yellow: 0, black: 0 }; 
-        extras = []; 
-        updateUI();
-        showToast('已重置');
-    }
-
-    // 显示提示
-    function showToast(msg) {
-        const t = document.getElementById("toast"); 
-        t.innerText = msg; 
-        t.classList.add("show");
-        setTimeout(() => t.classList.remove("show"), 2000);
-    }
-
-    // 更新界面
-    function updateUI() {
-        let total = 0, plates = 0;
-        for (const c in counts) {
-            document.getElementById(`count-${c}`).innerText = counts[c];
-            total += counts[c] * PRICES[c]; 
-            plates += counts[c];
-        }
-        const list = document.getElementById('others-list'); 
-        list.innerHTML = '';
-        extras.forEach((item, i) => {
-            total += item.price;
-            list.innerHTML += `<div class="other-item"><span>${item.name}</span><span>¥${item.price.toFixed(1)} <span class="remove-btn" onclick="removeExtra(${i})">✕</span></span></div>`;
-        });
-        document.getElementById('total-price').innerText = total.toFixed(2);
-        document.getElementById('total-plates').innerText = plates;
-    }
-
-    // 显示账单明细
-    function showReceiptModal() {
-        let total = 0, rows = '';
-        for (const c in counts) if (counts[c] > 0) {
-            const sub = counts[c] * PRICES[c]; 
-            total += sub;
-            rows += `<tr><td>${NAMES[c]}</td><td>¥${PRICES[c]}</td><td>${counts[c]}</td><td style="text-align:right">¥${sub}</td></tr>`;
-        }
-        extras.forEach(item => { 
-            total += item.price; 
-            rows += `<tr><td>${item.name}</td><td>-</td><td>1</td><td style="text-align:right">¥${item.price}</td></tr>`; 
-        });
-        
-        if (total === 0) return showToast('还没吃呢');
-        
-        document.getElementById('receipt-content').innerHTML = `
-            <div style="text-align:center; color: #000;">
-                <h2 style="margin:0;">盘盘算 · スシロ</h2>
-                <p style="color:#8e8e93; font-size:12px; margin:5px 0 20px;">账单详情</p>
-            </div>
-            <table class="receipt-table" style="color: #000;">
-                <thead><tr><th>项目</th><th>单价</th><th>数量</th><th style="text-align:right">合计</th></tr></thead>
-                <tbody>${rows}</tbody>
-            </table>
-            <div style="margin-top:30px; text-align:right; border-top:2px solid #000; padding-top:15px; color: #000;">
-                <span style="font-size:16px; font-weight:600;">总计</span>
-                <div style="font-size:32px; font-weight:900; color:#d0021b;">¥${total.toFixed(2)}</div>
-            </div>`;
-        document.getElementById('modal').style.display = 'flex';
-    }
-
-    // 点击模态框背景关闭
-    function handleModalClick(event) {
-        if (event.target === document.getElementById('modal')) {
-            closeModal();
-        }
-    }
-
-    function closeModal() { 
-        document.getElementById('modal').style.display = 'none'; 
-    }
-    
-    // 初始化界面
-    updateUI();
-</script>
-</body>
-</html>
+本项目基于 [MIT License](LICENSE) 开源，欢迎自由学习、分享与个人使用。
