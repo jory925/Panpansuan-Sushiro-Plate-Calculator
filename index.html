@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="color-scheme" content="light dark">
+    <title>盘盘算 · Sushiro Plate Calculator</title>
+    <!-- 引入 html2canvas 实现纯前端无依赖将账单渲染为图片 -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        :root {
+            /* 寿司盘官方标识色彩 */
+            --s-white: #ffffff;
+            --s-white-border: #d1d5db;
+            --s-red: #e63946;
+            --s-silver: #94a3b8;
+            --s-yellow: #f59e0b;
+            --s-black: #1e293b;
+            --accent-red: #e11d48;
+
+            /* 高级温润日料系浅色渐变 */
+            --bg-gradient: radial-gradient(at 10% 15%, rgba(254, 243, 199, 0.45) 0px, transparent 50%),
+                           radial-gradient(at 90% 10%, rgba(255, 228, 230, 0.5) 0px, transparent 55%),
+                           radial-gradient(at 85% 85%, rgba(224, 242, 254, 0.45) 0px, transparent 50%),
+                           radial-gradient(at 15% 90%, rgba(243, 244, 246, 0.6) 0px, transparent 50%),
+                           linear-gradient(135deg, #fbfbfd 0%, #f1f5f9 100%);
+            --glass-bg: rgba(255, 255, 255, 0.72);
+            --glass-card-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.85);
+            --glass-specular: rgba(255, 255, 255, 0.95);
+            --glass-inner-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.85);
+            --glass-shadow: 0 14px 40px 0 rgba(15, 23, 42, 0.06);
+            
+            --text-color: #0f172a;
+            --text-muted: #64748b;
+            --border-color: rgba(226, 232, 240, 0.8);
+            --btn-minus-bg: rgba(255, 255, 255, 0.85);
+            --summary-bg: rgba(255, 241, 242, 0.75);
+            --summary-border: rgba(255, 228, 230, 0.9);
+            --modal-bg: rgba(255, 255, 255, 0.85);
+            --item-border: rgba(241, 245, 249, 0.7);
+        }
+
+        /* 沉浸式暗色模式定义 */
+        body.theme-dark {
+            --bg-gradient: radial-gradient(at 0% 0%, #2a0845 0px, transparent 60%),
+                            radial-gradient(at 100% 0%, #6441a5 0px, transparent 60%),
+                            radial-gradient(at 50% 100%, #000000 0px, transparent 70%),
+                            #090a0f;
+            --glass-bg: rgba(24, 24, 32, 0.65);
+            --glass-card-bg: rgba(35, 35, 48, 0.55);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --glass-specular: rgba(255, 255, 255, 0.2);
+            --glass-inner-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
+            --glass-shadow: 0 16px 40px 0 rgba(0, 0, 0, 0.45);
+
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --btn-minus-bg: rgba(45, 45, 60, 0.65);
+            --summary-bg: rgba(50, 16, 26, 0.55);
+            --summary-border: rgba(225, 29, 72, 0.25);
+            --modal-bg: rgba(18, 18, 26, 0.88);
+            --item-border: rgba(255, 255, 255, 0.05);
+
+            --s-white: #f8fafc;
+            --s-white-border: #94a3b8;
+            --s-black: #09090b;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body:not(.theme-light) {
+                --bg-gradient: radial-gradient(at 0% 0%, #2a0845 0px, transparent 60%),
+                                radial-gradient(at 100% 0%, #6441a5 0px, transparent 60%),
+                                radial-gradient(at 50% 100%, #000000 0px, transparent 70%),
+                                #090a0f;
+                --glass-bg: rgba(24, 24, 32, 0.65);
+                --glass-card-bg: rgba(35, 35, 48, 0.55);
+                --glass-border: rgba(255, 255, 255, 0.12);
+                --glass-specular: rgba(255, 255, 255, 0.2);
+                --glass-inner-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
+                --glass-shadow: 0 16px 40px 0 rgba(0, 0, 0, 0.45);
+
+                --text-color: #f8fafc;
+                --text-muted: #94a3b8;
+                --border-color: rgba(255, 255, 255, 0.08);
+                --btn-minus-bg: rgba(45, 45, 60, 0.65);
+                --summary-bg: rgba(50, 16, 26, 0.55);
+                --summary-border: rgba(225, 29, 72, 0.25);
+                --modal-bg: rgba(18, 18, 26, 0.88);
+                --item-border: rgba(255, 255, 255, 0.05);
+
+                --s-white: #f8fafc;
+                --s-white-border: #94a3b8;
+                --s-black: #09090b;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        input {
+            user-select: auto;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", sans-serif;
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-color);
+            margin: 0;
+            padding: 16px 12px;
+            padding-bottom: calc(20px + env(safe-area-inset-bottom));
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            transition: background 0.4s ease, color 0.3s ease;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 440px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px) saturate(160%);
+            -webkit-backdrop-filter: blur(24px) saturate(160%);
+            padding: 24px 18px;
+            border-radius: 30px;
+            box-shadow: var(--glass-shadow);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-inner-shadow), var(--glass-shadow);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        /* 主题切换开关 */
+        .theme-toggle-btn {
+            position: absolute;
+            top: 20px;
+            right: 18px;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: var(--glass-inner-shadow), 0 3px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-color);
+            transition: transform 0.15s ease, background 0.3s ease;
+            z-index: 10;
+        }
+
+        .theme-toggle-btn:active {
+            transform: scale(0.88);
+        }
+
+        .header-section {
+            text-align: center;
+            margin-bottom: 22px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .main-title {
+            font-size: 21px;
+            margin: 0;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+
+        .sub-title {
+            font-size: 13px;
+            margin-top: 5px;
+            display: block;
+            color: var(--text-muted);
+            font-weight: 500;
+            letter-spacing: 0.2px;
+        }
+
+        /* 盘子布局：第一行3个，第二行2个居中 */
+        .plate-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+
+        .plate-item {
+            grid-column: span 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: var(--glass-card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 14px 6px 10px;
+            border-radius: 22px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-inner-shadow), 0 6px 18px rgba(0, 0, 0, 0.04);
+            transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease;
+        }
+
+        .plate-item:active {
+            transform: scale(0.96);
+        }
+
+        .plate-item:nth-child(4) { grid-column: 2 / span 2; }
+        .plate-item:nth-child(5) { grid-column: 4 / span 2; }
+
+        .plate-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.12s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 900;
+            font-variant-numeric: tabular-nums;
+            user-select: none;
+            color: #ffffff !important;
+            text-shadow: none !important;
+        }
+
+        .plate-btn:active {
+            transform: scale(0.9);
+        }
+
+        .white { 
+            background-color: var(--s-white) !important; 
+            border: 3px solid var(--s-white-border) !important; 
+        }
+        .red { 
+            background-color: var(--s-red) !important; 
+            border: 3px solid #c1121f !important; 
+        }
+        .silver { 
+            background-color: var(--s-silver) !important; 
+            border: 3px solid #64748b !important; 
+        }
+        .yellow { 
+            background-color: var(--s-yellow) !important; 
+            border: 3px solid #d97706 !important; 
+        }
+        .black { 
+            background-color: var(--s-black) !important; 
+            border: 3px solid #334155 !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+        }
+
+        .plate-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 2px;
+            letter-spacing: 0.3px;
+        }
+
+        .plate-price {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .counter-controls {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .ctrl-btn-minus {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid var(--glass-border);
+            background: var(--btn-minus-bg);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+            box-shadow: var(--glass-inner-shadow), 0 3px 8px rgba(0, 0, 0, 0.05);
+            transition: all 0.15s ease;
+        }
+
+        .ctrl-btn-minus:active {
+            transform: scale(0.88);
+            color: var(--text-color);
+            background: var(--border-color);
+        }
+
+        /* 隐藏的 iOS 原生震动辅助注入组件 */
+        .haptic-trigger {
+            position: fixed;
+            left: -9999px;
+            top: -9999px;
+            opacity: 0.01;
+            pointer-events: none;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+        }
+
+        /* 单点项目 */
+        .others-section { 
+            background: var(--glass-card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 14px;
+            border-radius: 22px;
+            margin-bottom: 20px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-inner-shadow);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        input {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            font-size: 14px;
+            outline: none;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            width: 100%;
+            color: var(--text-color);
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04);
+            transition: border-color 0.2s, background 0.3s;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            input {
+                background: rgba(20, 20, 28, 0.5);
+            }
+        }
+
+        input:focus {
+            border-color: var(--accent-red);
+        }
+
+        input[type="text"] { flex: 2; }
+        input[type="number"] { flex: 1.1; }
+
+        .btn-add { 
+            width: 100%;
+            padding: 11px; 
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; 
+            color: #ffffff !important; 
+            border: 1px solid rgba(255, 255, 255, 0.3); 
+            border-radius: 14px; 
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+            transition: opacity 0.15s, transform 0.1s;
+        }
+
+        .btn-add:active {
+            opacity: 0.88;
+            transform: scale(0.98);
+        }
+
+        .others-list {
+            max-height: 130px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+
+        .other-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 8px 4px; 
+            border-bottom: 1px solid var(--item-border);
+            font-size: 13.5px;
+            color: var(--text-color);
+        }
+
+        .remove-btn {
+            color: #ef4444;
+            padding: 4px 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .remove-btn:active {
+            transform: scale(0.85);
+        }
+
+        /* 汇总区域 */
+        .summary { 
+            background: var(--summary-bg); 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 18px 16px; 
+            border-radius: 24px; 
+            text-align: center; 
+            border: 1px solid var(--summary-border);
+            box-shadow: var(--glass-inner-shadow), 0 8px 20px rgba(225, 29, 72, 0.08);
+            transition: background 0.3s ease;
+        }
+
+        .total-amount { 
+            font-size: 38px; 
+            font-weight: 900; 
+            color: var(--accent-red); 
+            margin: 4px 0; 
+            letter-spacing: -0.5px;
+            font-variant-numeric: tabular-nums;
+            text-shadow: 0 2px 8px rgba(225, 29, 72, 0.2);
+        }
+
+        .total-label {
+            font-size: 14px;
+            color: var(--text-color);
+            font-weight: 800;
+        }
+
+        .plates-sub {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* 底部操作区 */
+        .actions {
+            margin-top: 18px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn-reset, .btn-export { 
+            padding: 15px; 
+            border: 1px solid var(--glass-border); 
+            border-radius: 18px; 
+            font-weight: 700; 
+            font-size: 15px; 
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.15s;
+        }
+
+        .btn-reset:active, .btn-export:active {
+            transform: scale(0.96);
+            opacity: 0.9;
+        }
+
+        .btn-reset {
+            background: var(--glass-card-bg) !important;
+            color: var(--text-color) !important;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: var(--glass-inner-shadow);
+        }
+
+        .btn-export {
+            background: linear-gradient(135deg, #e11d48 0%, #be123c 100%) !important;
+            color: #ffffff !important;
+            box-shadow: 0 6px 20px rgba(225, 29, 72, 0.35);
+        }
+
+        /* 模态框底部双按钮网格 */
+        .modal-actions {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 10px;
+        }
+
+        .btn-save-img {
+            padding: 13px;
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            box-shadow: 0 6px 18px rgba(14, 165, 233, 0.3);
+            transition: transform 0.1s, opacity 0.15s;
+        }
+
+        .btn-save-img:active {
+            transform: scale(0.96);
+            opacity: 0.88;
+        }
+
+        .btn-save-img:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* 模态框与高斯模糊 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(18px) saturate(180%);
+            -webkit-backdrop-filter: blur(18px) saturate(180%);
+            align-items: flex-end;
+        }
+
+        .modal-content { 
+            background: var(--modal-bg); 
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-inner-shadow), 0 -10px 40px rgba(0, 0, 0, 0.2);
+            padding: 24px 20px calc(28px + env(safe-area-inset-bottom)); 
+            border-radius: 32px 32px 0 0; 
+            width: 100%; 
+            max-height: 88vh; 
+            overflow-y: auto; 
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            color: var(--text-color);
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        /* 酷炫爆炸弹出评价框与冲击波粒子 */
+        .humor-card {
+            position: relative;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.25) 100%);
+            border: 1px solid var(--glass-border);
+            border-radius: 22px;
+            padding: 16px 18px;
+            margin: 18px 0 12px;
+            box-shadow: 0 12px 30px rgba(225, 29, 72, 0.15), var(--glass-inner-shadow);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            overflow: visible;
+            transform-origin: center center;
+            animation: explosionPop 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.35) forwards;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .humor-card {
+                background: linear-gradient(135deg, rgba(60, 30, 45, 0.6) 0%, rgba(35, 35, 50, 0.4) 100%);
+                box-shadow: 0 14px 35px rgba(225, 29, 72, 0.25), var(--glass-inner-shadow);
+            }
+        }
+
+        .humor-card::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 24px;
+            padding: 2px;
+            background: linear-gradient(90deg, #ff007f, #7928ca, #0070f3, #ff007f);
+            background-size: 300% 300%;
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            animation: borderGlow 3s ease infinite, shockPulse 0.8s ease-out;
+            pointer-events: none;
+        }
+
+        .humor-emoji-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+        }
+
+        .shockwave-ring {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 2px solid var(--accent-red);
+            opacity: 0;
+            pointer-events: none;
+            animation: blastRing 0.8s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+        }
+
+        .humor-emoji {
+            font-size: 38px;
+            display: inline-block;
+            transform-origin: center center;
+            animation: emojiBlast 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, floatHover 2.2s infinite ease-in-out 0.8s;
+            filter: drop-shadow(0 4px 12px rgba(225, 29, 72, 0.4));
+        }
+
+        .humor-text {
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.5;
+            color: var(--text-color);
+            letter-spacing: 0.2px;
+            animation: textFlickerIn 0.5s ease-out 0.15s both;
+        }
+
+        @keyframes explosionPop {
+            0% {
+                opacity: 0;
+                transform: scale(0.2) rotate(-8deg);
+                filter: brightness(2.5) blur(10px);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.12) rotate(3deg);
+                filter: brightness(1.3) blur(0);
+            }
+            75% { transform: scale(0.96) rotate(-1deg); }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+                filter: brightness(1);
+            }
+        }
+
+        @keyframes emojiBlast {
+            0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+            45% { transform: scale(1.6) rotate(20deg); opacity: 1; }
+            70% { transform: scale(0.9) rotate(-10deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        @keyframes blastRing {
+            0% { transform: scale(0.5); opacity: 0.9; border-width: 4px; }
+            100% { transform: scale(7.5); opacity: 0; border-width: 0.5px; }
+        }
+
+        @keyframes floatHover {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-5px) rotate(6deg) scale(1.05); }
+        }
+
+        @keyframes borderGlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes shockPulse {
+            0% { transform: scale(0.85); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes textFlickerIn {
+            0% { opacity: 0; transform: translateX(12px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+
+        .receipt-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .receipt-table th {
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px 4px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .receipt-table td {
+            padding: 12px 4px;
+            border-bottom: 1px solid var(--item-border);
+            font-size: 14px;
+        }
+
+        #toast {
+            visibility: hidden;
+            background: rgba(23, 23, 23, 0.75);
+            color: #ffffff;
+            text-align: center;
+            border-radius: 50px;
+            padding: 10px 22px;
+            position: fixed;
+            z-index: 2000;
+            bottom: calc(90px + env(safe-area-inset-bottom));
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            font-weight: 500;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+        }
+
+        #toast.show {
+            visibility: visible;
+            animation: fade 1.8s forwards;
+        }
+
+        @keyframes fade {
+            0% { opacity: 0; transform: translate(-50%, 10px); }
+            15% { opacity: 1; transform: translate(-50%, 0); }
+            80% { opacity: 1; transform: translate(-50%, 0); }
+            100% { opacity: 0; transform: translate(-50%, -10px); }
+        }
+
+        /* 点击碟子单颗 Emoji 飘升爆出动画 */
+        .single-emoji-pop {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            font-size: 32px;
+            user-select: none;
+            will-change: transform, opacity;
+            animation: singleEmojiFloat 0.85s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+        }
+
+        @keyframes singleEmojiFloat {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.3) translateY(0) rotate(0deg);
+            }
+            30% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.35) translateY(-30px) rotate(var(--rot));
+            }
+            70% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.1) translateY(-65px) rotate(var(--rot));
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8) translateY(-95px) rotate(var(--rot));
+            }
+        }
+
+        /* 账单弹窗底部喷涌的大量 Emoji 烟花粒子 */
+        .bill-emoji-particle {
+            position: fixed;
+            bottom: -20px;
+            pointer-events: none;
+            z-index: 10001;
+            user-select: none;
+            will-change: transform, opacity;
+            animation: bottomEmojiFountain var(--duration) cubic-bezier(0.12, 0.85, 0.35, 1) forwards;
+        }
+
+        @keyframes bottomEmojiFountain {
+            0% {
+                opacity: 0;
+                transform: translate3d(0, 0, 0) scale(0.4) rotate(0deg);
+            }
+            15% { opacity: 1; }
+            70% { opacity: 1; }
+            100% {
+                opacity: 0;
+                transform: translate3d(var(--x-shift), var(--y-target), 0) scale(var(--scale-end)) rotate(var(--rot-end));
+            }
+        }
+
+        /* 超大彩蛋：满百“你是猪逼吗？”震颤弹窗 */
+        .pig-easter-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            z-index: 10005;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .pig-easter-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .pig-easter-modal {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(255, 235, 240, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+            border: 2px solid rgba(244, 114, 182, 0.8);
+            border-radius: 36px;
+            padding: 28px 24px;
+            box-shadow: 0 25px 60px rgba(244, 63, 94, 0.45), inset 0 2px 4px rgba(255, 255, 255, 0.9);
+            transform: scale(0.1);
+            max-width: 86vw;
+            width: 320px;
+            cursor: pointer;
+        }
+
+        body.theme-dark .pig-easter-modal {
+            background: linear-gradient(135deg, rgba(50, 16, 26, 0.95) 0%, rgba(26, 12, 18, 0.92) 100%);
+            border-color: rgba(244, 63, 94, 0.6);
+            box-shadow: 0 25px 65px rgba(244, 63, 94, 0.55), inset 0 1px 2px rgba(255, 255, 255, 0.2);
+        }
+
+        .pig-easter-overlay.active .pig-easter-modal {
+            animation: giantPigBurst 0.75s cubic-bezier(0.175, 0.885, 0.32, 1.45) forwards;
+        }
+
+        .giant-pig-emoji {
+            font-size: 110px;
+            line-height: 1;
+            filter: drop-shadow(0 10px 25px rgba(244, 114, 182, 0.65));
+            animation: pigWiggle 1.4s ease-in-out infinite 0.75s;
+        }
+
+        .pig-roast-text {
+            font-size: 26px;
+            font-weight: 900;
+            margin-top: 14px;
+            color: #e11d48;
+            letter-spacing: 0.5px;
+            text-align: center;
+            text-shadow: 0 2px 10px rgba(225, 29, 72, 0.3);
+        }
+
+        body.theme-dark .pig-roast-text {
+            color: #fb7185;
+            text-shadow: 0 2px 14px rgba(251, 113, 133, 0.5);
+        }
+
+        .pig-tap-tip {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 10px;
+            font-weight: 600;
+            opacity: 0.85;
+        }
+
+        @keyframes giantPigBurst {
+            0% {
+                opacity: 0;
+                transform: scale(0.1) rotate(-15deg);
+                filter: brightness(2);
+            }
+            60% {
+                opacity: 1;
+                transform: scale(1.15) rotate(5deg);
+                filter: brightness(1.2);
+            }
+            80% {
+                transform: scale(0.95) rotate(-2deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+                filter: brightness(1);
+            }
+        }
+
+        @keyframes pigWiggle {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(-8deg) scale(1.08); }
+            75% { transform: rotate(8deg) scale(1.08); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 隐藏式 iOS 原生开关控件，辅助触发 iOS WebKit 线性马达震感 -->
+<label class="haptic-trigger" aria-hidden="true">
+    <input type="checkbox" id="ios-haptic-input" switch>
+</label>
+
+<div class="container">
+    <!-- 主题切换按钮 -->
+    <button class="theme-toggle-btn" id="theme-toggle" onclick="toggleTheme()" aria-label="切换浅色/暗色模式">
+        <svg id="theme-icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        <svg id="theme-icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+    </button>
+
+    <div class="header-section">
+        <h1 class="main-title">盘盘算 · Sushiro</h1>
+        <div class="sub-title">@jory 个人计数工具</div>
+    </div>
+
+    <!-- 盘子选择区域 -->
+    <div class="plate-grid">
+        <div class="plate-item">
+            <div class="plate-btn white" id="count-white" onclick="adjustPlate('white', 1, event)">0</div>
+            <div class="plate-name">白碟</div>
+            <div class="plate-price">¥8</div>
+            <div class="counter-controls"><div class="ctrl-btn-minus" onclick="adjustPlate('white', -1)">−</div></div>
+        </div>
+        <div class="plate-item">
+            <div class="plate-btn red" id="count-red" onclick="adjustPlate('red', 1, event)">0</div>
+            <div class="plate-name">红碟</div>
+            <div class="plate-price">¥10</div>
+            <div class="counter-controls"><div class="ctrl-btn-minus" onclick="adjustPlate('red', -1)">−</div></div>
+        </div>
+        <div class="plate-item">
+            <div class="plate-btn silver" id="count-silver" onclick="adjustPlate('silver', 1, event)">0</div>
+            <div class="plate-name">银碟</div>
+            <div class="plate-price">¥15</div>
+            <div class="counter-controls"><div class="ctrl-btn-minus" onclick="adjustPlate('silver', -1)">−</div></div>
+        </div>
+        <div class="plate-item">
+            <div class="plate-btn yellow" id="count-yellow" onclick="adjustPlate('yellow', 1, event)">0</div>
+            <div class="plate-name">黄碟</div>
+            <div class="plate-price">¥20</div>
+            <div class="counter-controls"><div class="ctrl-btn-minus" onclick="adjustPlate('yellow', -1)">−</div></div>
+        </div>
+        <div class="plate-item">
+            <div class="plate-btn black" id="count-black" onclick="adjustPlate('black', 1, event)">0</div>
+            <div class="plate-name">黑碟</div>
+            <div class="plate-price">¥28</div>
+            <div class="counter-controls"><div class="ctrl-btn-minus" onclick="adjustPlate('black', -1)">−</div></div>
+        </div>
+    </div>
+
+    <!-- 单点项目区域 -->
+    <div class="others-section">
+        <div class="input-group">
+            <div class="input-row">
+                <input type="text" id="extra-name" placeholder="菜名（如拉面）" enterkeyhint="next">
+                <input type="number" id="extra-price" placeholder="¥" inputmode="decimal" enterkeyhint="done">
+            </div>
+            <button class="btn-add" onclick="addExtra()">添加单项</button>
+        </div>
+        <div class="others-list" id="others-list"></div>
+    </div>
+
+    <!-- 汇总区域 -->
+    <div class="summary">
+        <div class="total-label">总计</div>
+        <div class="total-amount">¥<span id="total-price">0.00</span></div>
+        <div class="plates-sub">共 <span id="total-plates">0</span> 盘</div>
+    </div>
+
+    <div class="actions">
+        <button class="btn-reset" onclick="resetAll()">重置</button>
+        <button class="btn-export" onclick="showReceiptModal()">账单详情</button>
+    </div>
+</div>
+
+<!-- 模态框：点击空白处关闭 -->
+<div id="modal" class="modal" onclick="handleModalClick(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div id="receipt-capture-area">
+            <div id="receipt-content"></div>
+        </div>
+        <div class="modal-actions" id="modal-actions-bar">
+            <button class="btn-reset" style="padding: 13px; border-radius: 16px; margin: 0;" onclick="closeModal()">返回修改</button>
+            <button class="btn-save-img" id="btn-save-img" onclick="exportReceiptAsImage()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                <span>保存账单图片</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 满100元彩蛋弹出层 -->
+<div id="pig-easter" class="pig-easter-overlay" onclick="closePigEaster()">
+    <div class="pig-easter-modal" onclick="closePigEaster()">
+        <div class="giant-pig-emoji">🐷</div>
+        <div class="pig-roast-text">你是猪逼吗？</div>
+        <div class="pig-tap-tip">轻触任意处关闭</div>
+    </div>
+</div>
+
+<!-- Toast 提示 -->
+<div id="toast">已重置</div>
+
+<script>
+    const PRICES = { white: 8, red: 10, silver: 15, yellow: 20, black: 28 };
+    const NAMES = { white: "白碟", red: "红碟", silver: "银碟", yellow: "黄碟", black: "黑碟" };
+    
+    let counts = { white: 0, red: 0, silver: 0, yellow: 0, black: 0 };
+    let extras = [];
+    let easterTimer = null;
+
+    /**
+     * 增强型混合触觉反馈系统 (Haptic Engine 3.0)
+     */
+    let audioCtx = null;
+    function getAudioContext() {
+        if (!audioCtx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) {
+                audioCtx = new AudioCtx();
+            }
+        }
+        return audioCtx;
+    }
+
+    // 在用户第一次触摸屏幕时立刻初始化并唤醒硬件音频上下文
+    function unlockHaptics() {
+        const ctx = getAudioContext();
+        if (ctx && ctx.state === 'suspended') {
+            ctx.resume().catch(() => {});
+        }
+        window.removeEventListener('touchstart', unlockHaptics);
+        window.removeEventListener('pointerdown', unlockHaptics);
+    }
+    window.addEventListener('touchstart', unlockHaptics, { passive: true });
+    window.addEventListener('pointerdown', unlockHaptics, { passive: true });
+
+    function triggerHaptic(type = 'light') {
+        // 1. Android 标准 API (增加时长以适配不同马达响应速度)
+        if (typeof window.navigator !== 'undefined' && window.navigator.vibrate) {
+            try {
+                switch(type) {
+                    case 'light': window.navigator.vibrate(30); break;
+                    case 'medium': window.navigator.vibrate(60); break;
+                    case 'heavy': window.navigator.vibrate([40, 50, 40]); break;
+                    case 'double': window.navigator.vibrate([30, 60, 30]); break;
+                    case 'easter': window.navigator.vibrate([60, 80, 60, 80, 120]); break;
+                }
+            } catch(e) { console.warn('Vibrate failed', e); }
+        }
+
+        // 2. 桥接特殊环境：微信 JS-SDK / Telegram Mini App 原生震动接口
+        try {
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+                const style = (type === 'heavy' || type === 'easter') ? 'heavy' : (type === 'medium' ? 'medium' : 'light');
+                window.Telegram.WebApp.HapticFeedback.impactOccurred(style);
+            } else if (typeof wx !== 'undefined' && wx.vibrateShort) {
+                if (type === 'heavy' || type === 'easter') wx.vibrateLong();
+                else wx.vibrateShort();
+            }
+        } catch(e) {}
+
+        // 3. iOS Taptic Audio 声音补偿 (低频正弦波沉闷声效模拟)
+        try {
+            const ctx = getAudioContext();
+            if (ctx) {
+                if (ctx.state === 'suspended') ctx.resume();
+                
+                const freq = type === 'heavy' ? 80 : (type === 'medium' ? 100 : 140);
+                const duration = type === 'heavy' ? 0.05 : 0.03;
+                
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                osc.type = 'sine'; // 正弦波听感更闷，更像物理震颤
+                osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(20, ctx.currentTime + duration);
+                
+                gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + duration);
+            }
+        } catch (e) {}
+    }
+
+    /**
+     * 主题模式检测与切换逻辑
+     */
+    function isCurrentlyDark() {
+        if (document.body.classList.contains('theme-dark')) return true;
+        if (document.body.classList.contains('theme-light')) return false;
+        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+
+    function updateThemeIcons() {
+        const isDark = isCurrentlyDark();
+        const sun = document.getElementById('theme-icon-sun');
+        const moon = document.getElementById('theme-icon-moon');
+        if (sun && moon) {
+            sun.style.display = isDark ? 'block' : 'none';
+            moon.style.display = isDark ? 'none' : 'block';
+        }
+    }
+
+    function toggleTheme() {
+        triggerHaptic('light');
+        const currentlyDark = isCurrentlyDark();
+        if (currentlyDark) {
+            document.body.classList.remove('theme-dark');
+            document.body.classList.add('theme-light');
+            showToast('已切换为浅色模式');
+        } else {
+            document.body.classList.remove('theme-light');
+            document.body.classList.add('theme-dark');
+            showToast('已切换为暗色模式');
+        }
+        updateThemeIcons();
+    }
+
+    if (window.matchMedia) {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            if (!document.body.classList.contains('theme-dark') && !document.body.classList.contains('theme-light')) {
+                updateThemeIcons();
+            }
+        });
+    }
+
+    /**
+     * 根据消费情况生成幽默毒舌或赞扬评价
+     */
+    function generateHumorReview(total, plates, counts, extras) {
+        const blackRatio = plates > 0 ? (counts.black / plates) : 0;
+        const whiteRatio = plates > 0 ? (counts.white / plates) : 0;
+
+        if (total > 350 || counts.black >= 6) {
+            return {
+                emoji: '👑',
+                text: '今晚全场由赵公子买单！黑碟当饭吃，这桌简直是移动的GDP！'
+            };
+        }
+        if (plates >= 22) {
+            return {
+                emoji: '🦖',
+                text: '盘子堆得比传送带还高！隔壁桌都惊呆了，胃里装了个黑洞吧！'
+            };
+        }
+        if (blackRatio >= 0.5 && plates >= 3) {
+            return {
+                emoji: '💎',
+                text: '纯正黑碟贵族！金枪鱼大腹直接拉满，主打一个不差钱！'
+            };
+        }
+        if (whiteRatio >= 0.65 && plates >= 4) {
+            return {
+                emoji: '🧮',
+                text: '精打细算白碟大师！每一块钱都花在刀刃上，老板看了直抹泪。'
+            };
+        }
+        if (extras.length >= 3) {
+            return {
+                emoji: '🍜',
+                text: '拉面甜品炸鸡全拿下，您这莫非是把寿司郎当成了日料居酒屋？'
+            };
+        }
+        if (total > 180) {
+            return {
+                emoji: '😋',
+                text: '荤素搭配，红黄兼顾！这顿吃得属实专业，碳水与油脂的狂欢！'
+            };
+        }
+        if (plates <= 3 && total < 50) {
+            return {
+                emoji: '🐣',
+                text: '猫猫胃认证！就吃这么两口，寿司郎都要以为你走错店了。'
+            };
+        }
+        return {
+            emoji: '🍣',
+            text: '饱餐一顿，快乐回血！寿司郎今日最佳食客非你莫属！'
+        };
+    }
+
+    /**
+     * 按下碟子仅弹出单颗对应食物 Emoji
+     */
+    const EMOJI_POOLS = {
+        white: ['🍣', '🍙', '🍣', '🍚', '🍥', '🍘'],
+        red: ['🍣', '🦐', '🐟', '🐙', '🍣', '🦑'],
+        silver: ['🐟', '🍣', '🦪', '🍣', '🍤', '🍣'],
+        yellow: ['🍣', '🦀', '🦐', '🥟', '🍣', '🍣'],
+        black: ['🍣', '🥩', '🍣', '🐟', '🍣', '🍱']
+    };
+
+    function spawnSingleEmoji(color, event) {
+        let x = window.innerWidth / 2;
+        let y = window.innerHeight / 2;
+
+        if (event) {
+            if (event.clientX && event.clientY) {
+                x = event.clientX;
+                y = event.clientY;
+            } else if (event.currentTarget) {
+                const rect = event.currentTarget.getBoundingClientRect();
+                x = rect.left + rect.width / 2;
+                y = rect.top + rect.height / 2;
+            }
+        }
+
+        const pool = EMOJI_POOLS[color] || ['🍣', '🍙'];
+        const chosenEmoji = pool[Math.floor(Math.random() * pool.length)];
+
+        const el = document.createElement('div');
+        el.className = 'single-emoji-pop';
+        el.innerText = chosenEmoji;
+
+        const rot = ((Math.random() - 0.5) * 50).toFixed(1) + 'deg';
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+        el.style.setProperty('--rot', rot);
+
+        document.body.appendChild(el);
+        setTimeout(() => {
+            if (el.parentNode) el.parentNode.removeChild(el);
+        }, 850);
+    }
+
+    /**
+     * 账单详情界面触发：从屏幕底部向上喷射大量 Emoji 瀑布
+     */
+    const CELEBRATION_EMOJIS = ['🍣', '🍣', '🍤', '🍜', '🍱', '🍻', '🥢', '🍙', '🔥', '🎉', '✨', '👑', '🐟', '🐙', '🦀', '🥟', '🍥', '⭐'];
+
+    function launchBillFountain() {
+        const count = 36;
+        const winW = window.innerWidth;
+        const winH = window.innerHeight;
+
+        for (let i = 0; i < count; i++) {
+            setTimeout(() => {
+                const el = document.createElement('div');
+                el.className = 'bill-emoji-particle';
+                el.innerText = CELEBRATION_EMOJIS[Math.floor(Math.random() * CELEBRATION_EMOJIS.length)];
+
+                const startX = winW * 0.15 + Math.random() * (winW * 0.7);
+                const xShift = (Math.random() - 0.5) * (winW * 0.75) + 'px';
+                const yTarget = -(winH * 0.45 + Math.random() * (winH * 0.42)) + 'px';
+                const fontSize = 24 + Math.floor(Math.random() * 22);
+                const duration = (1.1 + Math.random() * 0.7).toFixed(2) + 's';
+                const scaleEnd = (0.9 + Math.random() * 0.5).toFixed(2);
+                const rotEnd = ((Math.random() - 0.5) * 540).toFixed(0) + 'deg';
+
+                el.style.left = `${startX}px`;
+                el.style.fontSize = `${fontSize}px`;
+                el.style.setProperty('--x-shift', xShift);
+                el.style.setProperty('--y-target', yTarget);
+                el.style.setProperty('--duration', duration);
+                el.style.setProperty('--scale-end', scaleEnd);
+                el.style.setProperty('--rot-end', rotEnd);
+
+                document.body.appendChild(el);
+                setTimeout(() => {
+                    if (el.parentNode) el.parentNode.removeChild(el);
+                }, 1900);
+            }, i * 22);
+        }
+    }
+
+    /**
+     * 彩蛋：金额超过100元弹出巨大的猪猪
+     */
+    function triggerPigEasterEgg() {
+        if (easterTimer) clearTimeout(easterTimer);
+        // 等待底部喷泉与账单初始爆炸动效展示完毕后（约1.2s）震撼弹出
+        easterTimer = setTimeout(() => {
+            const easterOverlay = document.getElementById('pig-easter');
+            if (easterOverlay && document.getElementById('modal').style.display === 'flex') {
+                easterOverlay.classList.add('active');
+                triggerHaptic('easter');
+            }
+        }, 1200);
+    }
+
+    function closePigEaster() {
+        const easterOverlay = document.getElementById('pig-easter');
+        if (easterOverlay) {
+            easterOverlay.classList.remove('active');
+            triggerHaptic('light');
+        }
+    }
+
+    function adjustPlate(color, delta, event = null) {
+        if (counts[color] + delta >= 0) {
+            counts[color] += delta;
+            updateUI();
+            if (delta > 0) {
+                spawnSingleEmoji(color, event);
+                triggerHaptic('light');
+            } else {
+                triggerHaptic('medium');
+            }
+        } else {
+            triggerHaptic('medium');
+        }
+    }
+
+    function addExtra() {
+        const pIn = document.getElementById('extra-price');
+        const nIn = document.getElementById('extra-name');
+        const price = parseFloat(pIn.value);
+        
+        if (isNaN(price) || price <= 0) {
+            triggerHaptic('double');
+            return showToast('请输入有效价格');
+        }
+        
+        extras.push({ name: nIn.value.trim() || `单点${extras.length + 1}`, price });
+        pIn.value = '';
+        nIn.value = ''; 
+        pIn.blur();
+        nIn.blur();
+        updateUI();
+        triggerHaptic('heavy');
+    }
+
+    function removeExtra(index) { 
+        extras.splice(index, 1); 
+        updateUI();
+        triggerHaptic('medium');
+    }
+
+    function resetAll() {
+        counts = { white: 0, red: 0, silver: 0, yellow: 0, black: 0 }; 
+        extras = []; 
+        updateUI();
+        showToast('已重置');
+        triggerHaptic('double');
+    }
+
+    function showToast(msg) {
+        const t = document.getElementById("toast"); 
+        t.innerText = msg; 
+        t.classList.remove("show");
+        void t.offsetWidth;
+        t.classList.add("show");
+        setTimeout(() => t.classList.remove("show"), 1800);
+    }
+
+    function updateUI() {
+        let total = 0, plates = 0;
+        for (const c in counts) {
+            document.getElementById(`count-${c}`).innerText = counts[c];
+            total += counts[c] * PRICES[c]; 
+            plates += counts[c];
+        }
+        const list = document.getElementById('others-list'); 
+        list.innerHTML = '';
+        extras.forEach((item, i) => {
+            total += item.price;
+            list.innerHTML += `
+                <div class="other-item">
+                    <span>${escapeHtml(item.name)}</span>
+                    <span>¥${item.price.toFixed(1)} <span class="remove-btn" onclick="removeExtra(${i})">✕</span></span>
+                </div>`;
+        });
+        document.getElementById('total-price').innerText = total.toFixed(2);
+        document.getElementById('total-plates').innerText = plates;
+    }
+
+    function escapeHtml(text) {
+        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function showReceiptModal() {
+        let total = 0, plates = 0, rows = '';
+        for (const c in counts) if (counts[c] > 0) {
+            const sub = counts[c] * PRICES[c]; 
+            total += sub;
+            plates += counts[c];
+            rows += `<tr><td>${NAMES[c]}</td><td>¥${PRICES[c]}</td><td>${counts[c]}</td><td style="text-align:right">¥${sub}</td></tr>`;
+        }
+        extras.forEach(item => { 
+            total += item.price; 
+            rows += `<tr><td>${escapeHtml(item.name)}</td><td>-</td><td>1</td><td style="text-align:right">¥${item.price.toFixed(1)}</td></tr>`; 
+        });
+        
+        if (total === 0) {
+            triggerHaptic('double');
+            return showToast('还没吃呢');
+        }
+
+        const review = generateHumorReview(total, plates, counts, extras);
+        
+        document.getElementById('receipt-content').innerHTML = `
+            <div style="text-align:center;">
+                <h2 style="margin:0; font-size:22px; font-weight:800;">盘盘算 · スシロ</h2>
+                <p style="color:var(--text-muted); font-size:12px; margin:4px 0 10px;">账单详情明细 · ${new Date().toLocaleDateString()}</p>
+            </div>
+            
+            <div class="humor-card">
+                <div class="humor-emoji-wrap">
+                    <span class="shockwave-ring"></span>
+                    <span class="shockwave-ring" style="animation-delay: 0.12s;"></span>
+                    <span class="humor-emoji">${review.emoji}</span>
+                </div>
+                <span class="humor-text">${review.text}</span>
+            </div>
+
+            <table class="receipt-table">
+                <thead><tr><th>项目</th><th>单价</th><th>数量</th><th style="text-align:right">合计</th></tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+            <div style="margin-top:22px; text-align:right; border-top:1px solid var(--border-color); padding-top:14px;">
+                <span style="font-size:13px; font-weight:600; color:var(--text-muted);">总计实付</span>
+                <div style="font-size:34px; font-weight:900; color:var(--accent-red); margin-top:2px;">¥${total.toFixed(2)}</div>
+            </div>`;
+        
+        document.getElementById('modal').style.display = 'flex';
+        launchBillFountain();
+        triggerHaptic('heavy');
+
+        // 总金额超过 100 元时触发惊喜彩蛋
+        if (total > 100) {
+            triggerPigEasterEgg();
+        }
+    }
+
+    async function exportReceiptAsImage() {
+        const btn = document.getElementById('btn-save-img');
+        const captureArea = document.getElementById('receipt-capture-area');
+        
+        if (!captureArea || typeof html2canvas === 'undefined') {
+            return showToast('截图组件加载中，请稍候');
+        }
+
+        triggerHaptic('medium');
+        const originalBtnHTML = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span>生成中...</span>';
+
+        try {
+            const isDark = isCurrentlyDark();
+            const canvasBg = isDark ? '#14141e' : '#f8fafc';
+
+            const canvas = await html2canvas(captureArea, {
+                scale: 2.5,
+                useCORS: true,
+                backgroundColor: canvasBg,
+                logging: false,
+                onclone: (clonedDoc) => {
+                    const clonedArea = clonedDoc.getElementById('receipt-capture-area');
+                    if (clonedArea) {
+                        clonedArea.style.padding = '18px 14px';
+                        clonedArea.style.borderRadius = '20px';
+                    }
+                }
+            });
+
+            canvas.toBlob(async (blob) => {
+                if (!blob) {
+                    fallbackDownload(canvas);
+                    return;
+                }
+                const fileName = `寿司郎账单_${Date.now()}.png`;
+                const file = new File([blob], fileName, { type: 'image/png' });
+
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                        await navigator.share({
+                            files: [file],
+                            title: '盘盘算·账单明细',
+                            text: '这是我的寿司郎消费账单'
+                        });
+                        showToast('分享成功');
+                        triggerHaptic('heavy');
+                        return;
+                    } catch (shareErr) {
+                        if (shareErr.name === 'AbortError') return;
+                    }
+                }
+
+                fallbackDownload(canvas);
+            }, 'image/png');
+
+        } catch (error) {
+            console.error('导出账单图片失败:', error);
+            showToast('生成图片失败，请截图保存');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalBtnHTML;
+        }
+    }
+
+    function fallbackDownload(canvas) {
+        try {
+            const dataURL = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = `盘盘算_寿司账单_${new Date().toISOString().slice(0, 10)}.png`;
+            link.href = dataURL;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('账单图片已保存');
+            triggerHaptic('double');
+        } catch (e) {
+            showToast('已生成，长按屏幕可保存');
+        }
+    }
+
+    function handleModalClick(event) {
+        if (event.target === document.getElementById('modal')) {
+            closeModal();
+        }
+    }
+
+    function closeModal() { 
+        if (easterTimer) clearTimeout(easterTimer);
+        closePigEaster();
+        document.getElementById('modal').style.display = 'none'; 
+        triggerHaptic('light');
+    }
+    
+    // 初始化界面与主题图标
+    updateUI();
+    updateThemeIcons();
+</script>
+</body>
+</html>
